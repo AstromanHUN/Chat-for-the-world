@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,600,0,0&icon_names=send" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,700,1,0&icon_names=for_you" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0&icon_names=edit" />
+    <title>Astro chat</title>
+</head>
+
+<style>
+
+body{
+    background-color: #181825;
+    width: 100vw;
+    height: calc(100vh - 40px);
+    margin: 0;
+}
+
+.messagebox{
+    outline: none;
+    display: block;
+    border: 0;
+    background-color: #585b70;
+    border-radius: 5px;
+    text-align: center;
+    color: aliceblue;
+    width: calc(100% - 36px);
+}
+
+.send-message{
+    left: 50%;
+    position: absolute;
+    bottom: 15px;
+    transform: translateX(-50%);
+    width: calc(100% - 100px);
+    height: 25px;
+    display: flex;
+}
+
+.messagebox::placeholder{
+    color: aliceblue;
+}
+
+.textbox{
+    background-color: #313244;
+    border-radius: 20px;
+    margin: auto;
+    margin-top: 40px;
+    width: calc(100% - 100px);
+    height: 90%;
+    color: aliceblue;
+    font-size: 30px;
+    overflow: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: #313244 #585b70;
+    padding-top: 10px;
+}
+
+.textbox2{
+    background-color: #313244;
+    padding: 15px;
+    border-radius: 20px;
+    width: calc(100% - 30px);
+    height: calc(100% - 30px);
+    overflow: auto;
+}
+
+.material-symbols-rounded{
+    color: #f0f8ff;
+}
+
+.send-button{
+    background-color: transparent;
+    border: 0;
+    border-radius: 10px;
+    margin-left: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.send-button:hover{
+    background-color: #45475a;
+}
+
+p{
+    transition: color 0.5s ease;
+    margin: 0;
+}
+
+.message[canedit = "true"] p{
+    cursor: pointer;
+}
+
+.message[canedit = "true"] p:hover{
+    text-decoration: line-through;
+    color: red;
+}
+
+.message{
+    display: flex;
+}
+
+.message[canedit = "true"]:hover .rename-button {
+    display: inline;
+}
+
+.material-symbols-outlined{
+    color: #f0f8ff;
+}
+
+.rename-button{
+    border: 0;
+    display: none;
+    background-color: #313244;
+    border-radius: 10px;
+    user-select: none;
+    transition: background-color 0.3s ease;
+}
+
+.rename-button:hover{
+    background-color: #181825;
+}
+
+</style>
+
+<script>
+    const B32_CHARACTERS="0123456789ABCDEFGHJKMNPQRSTVWXYZ",ENCODING="0123456789ABCDEFGHJKMNPQRSTVWXYZ",ENCODING_LEN=32,MAX_ULID="7ZZZZZZZZZZZZZZZZZZZZZZZZZ",MIN_ULID="00000000000000000000000000",RANDOM_LEN=16,TIME_LEN=10,TIME_MAX=0xffffffffffff,ULID_REGEX=/^[0-7][0-9a-hjkmnp-tv-zA-HJKMNP-TV-Z]{25}$/,UUID_REGEX=/^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$/;var ULIDErrorCode;!function(e){e.Base32IncorrectEncoding="B32_ENC_INVALID",e.DecodeTimeInvalidCharacter="DEC_TIME_CHAR",e.DecodeTimeValueMalformed="DEC_TIME_MALFORMED",e.EncodeTimeNegative="ENC_TIME_NEG",e.EncodeTimeSizeExceeded="ENC_TIME_SIZE_EXCEED",e.EncodeTimeValueMalformed="ENC_TIME_MALFORMED",e.PRNGDetectFailure="PRNG_DETECT",e.ULIDInvalid="ULID_INVALID",e.Unexpected="UNEXPECTED",e.UUIDInvalid="UUID_INVALID"}(ULIDErrorCode||(ULIDErrorCode={}));class ULIDError extends Error{constructor(e,r){super(`${r} (${e})`),this.name="ULIDError",this.code=e}}function randomChar(e){const r=Math.floor(32*e())%32;return ENCODING.charAt(r)}function replaceCharAt(e,r,o){return r>e.length-1?e:e.substr(0,r)+o+e.substr(r+1)}function crockfordEncode(e){const r=[];let o=0,n=0;const t=new Uint8Array(e.slice().reverse());for(const e of t)for(n|=e<<o,o+=8;o>=5;)r.unshift(31&n),n>>>=5,o-=5;return o>0&&r.unshift(31&n),r.map((e=>B32_CHARACTERS.charAt(e))).join("")}function crockfordDecode(e){const r=e.toUpperCase().split("").reverse().join(""),o=[];let n=0,t=0;for(const e of r){const r=B32_CHARACTERS.indexOf(e);if(-1===r)throw new Error(`Invalid base 32 character found in string: ${e}`);for(t|=r<<n,n+=5;n>=8;)o.unshift(255&t),t>>>=8,n-=8}return(n>=5||t>0)&&o.unshift(255&t),new Uint8Array(o)}function fixULIDBase32(e){return e.replace(/i/gi,"1").replace(/l/gi,"1").replace(/o/gi,"0").replace(/-/g,"")}function incrementBase32(e){let r,o,n,t=e.length,i=e;for(;!r&&t-- >=0;){if(o=i[t],n=ENCODING.indexOf(o),-1===n)throw new ULIDError(ULIDErrorCode.Base32IncorrectEncoding,"Incorrectly encoded string");31!==n?r=replaceCharAt(i,t,ENCODING[n+1]):i=replaceCharAt(i,t,ENCODING[0])}if("string"==typeof r)return r;throw new ULIDError(ULIDErrorCode.Base32IncorrectEncoding,"Failed incrementing string")}function decodeTime(e){if(26!==e.length)throw new ULIDError(ULIDErrorCode.DecodeTimeValueMalformed,"Malformed ULID");const r=e.substr(0,10).toUpperCase().split("").reverse().reduce(((e,r,o)=>{const n=ENCODING.indexOf(r);if(-1===n)throw new ULIDError(ULIDErrorCode.DecodeTimeInvalidCharacter,`Time decode error: Invalid character: ${r}`);return e+n*Math.pow(32,o)}),0);if(r>TIME_MAX)throw new ULIDError(ULIDErrorCode.DecodeTimeValueMalformed,`Malformed ULID: timestamp too large: ${r}`);return r}function detectPRNG(e){const r=detectRoot(),o=r&&(r.crypto||r.msCrypto)||null;if("function"==typeof o?.getRandomValues)return()=>{const e=new Uint8Array(1);return o.getRandomValues(e),e[0]/255};if("function"==typeof o?.randomBytes)return()=>o.randomBytes(1).readUInt8()/255;throw new ULIDError(ULIDErrorCode.PRNGDetectFailure,"Failed to find a reliable PRNG")}function detectRoot(){return inWebWorker()?self:"undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:null}function encodeRandom(e,r){let o="";for(;e>0;e--)o=randomChar(r)+o;return o}function encodeTime(e,r=10){if(isNaN(e))throw new ULIDError(ULIDErrorCode.EncodeTimeValueMalformed,`Time must be a number: ${e}`);if(e>TIME_MAX)throw new ULIDError(ULIDErrorCode.EncodeTimeSizeExceeded,`Cannot encode a time larger than ${TIME_MAX}: ${e}`);if(e<0)throw new ULIDError(ULIDErrorCode.EncodeTimeNegative,`Time must be positive: ${e}`);if(!1===Number.isInteger(e))throw new ULIDError(ULIDErrorCode.EncodeTimeValueMalformed,`Time must be an integer: ${e}`);let o,n="";for(let t=r;t>0;t--)o=e%32,n=ENCODING.charAt(o)+n,e=(e-o)/32;return n}function inWebWorker(){return"undefined"!=typeof WorkerGlobalScope&&self instanceof WorkerGlobalScope}function isValid(e){return"string"==typeof e&&26===e.length&&e.toUpperCase().split("").every((e=>-1!==ENCODING.indexOf(e)))}function monotonicFactory(e){const r=e||detectPRNG();let o,n=0;return function(e){const t=!e||isNaN(e)?Date.now():e;if(t<=n){const e=o=incrementBase32(o);return encodeTime(n,10)+e}n=t;const i=o=encodeRandom(16,r);return encodeTime(t,10)+i}}function ulid(e,r){const o=r||detectPRNG();return encodeTime(!e||isNaN(e)?Date.now():e,10)+encodeRandom(16,o)}function ulidToUUID(e){if(!ULID_REGEX.test(e))throw new ULIDError(ULIDErrorCode.ULIDInvalid,`Invalid ULID: ${e}`);const r=crockfordDecode(e);let o=Array.from(r).map((e=>e.toString(16).padStart(2,"0"))).join("");return o=o.substring(0,8)+"-"+o.substring(8,12)+"-"+o.substring(12,16)+"-"+o.substring(16,20)+"-"+o.substring(20),o.toUpperCase()}function uuidToULID(e){if(!UUID_REGEX.test(e))throw new ULIDError(ULIDErrorCode.UUIDInvalid,`Invalid UUID: ${e}`);const r=e.replace(/-/g,"").match(/.{1,2}/g);if(!r)throw new ULIDError(ULIDErrorCode.Unexpected,`Failed parsing UUID bytes: ${e}`);return crockfordEncode(new Uint8Array(r.map((e=>parseInt(e,16)))))}
+</script>
+
+<script>
+let username = prompt("Username:")
+if (username.length < 1){
+    window.location.reload()
+}
+
+const socket = new WebSocket(`ws://${window.location.hostname}:6969`);
+
+socket.addEventListener("open", (event) => {
+  socket.send("login:" + username);
+});
+
+socket.addEventListener("close", (event) => {
+  window.location.reload()
+});
+
+let msgid = 0
+let msgeditid = ""
+
+socket.addEventListener("message", (event) => {
+  console.log("Message from server ", event.data);
+  let command = event.data.split(":")
+  if (command[0] == "message") {
+  let div = document.createElement("div")
+  let rename_button = document.createElement("button")
+  rename_button.innerHTML = `<span class="material-symbols-outlined"> edit </span>`
+  rename_button.classList.add("rename-button")
+  div.classList.add("message")
+  div.setAttribute("canedit", command[2] == username)
+  let p = document.createElement("P")
+  rename_button.onclick = function() {
+  document.getElementById("messagebox").value = p.innerText.split(":").slice(1).join(":")
+  msgeditid = div.id
+  }
+  p.onclick = function () {
+  socket.send("delete:" + div.id)
+  }
+  div.id = command[1]
+  msgid ++
+  p.innerText = command.slice(2).join(":")
+  div.appendChild(p)
+  div.appendChild(rename_button)
+  document.getElementById("textbox").appendChild(div)
+  document.getElementById("textbox").scroll({top:document.getElementById("textbox").scrollHeight,behavior:"smooth"})
+  }
+  else if (command[0] == "delete") {
+    document.getElementById(command[1]).remove()
+  }
+  else if (command[0] == "edit") {
+    document.getElementById(command[1]).childNodes[0].innerText = command.slice(2).join(":")
+  }
+});
+
+function send_message() {
+    let msg = document.getElementById("messagebox").value
+    if (msg.length < 1) {
+        return
+    }
+    let id = ulid()
+    if (msgeditid.length > 0) {
+        socket.send("edit:" + msgeditid + ":" + msg)
+        msgeditid = ""
+    }
+    else{
+        socket.send("message:" + id + ":" + msg)
+    }
+    document.getElementById("messagebox").value = ""  
+}
+
+function send_on_enter_press(e) {
+    if (e.key=="Enter") {
+        send_message()
+    }
+}
+
+</script>
+
+<body>
+    <div class="send-message"><input type="text" placeholder="Message" class="messagebox" id="messagebox" autocomplete="off" onkeypress="send_on_enter_press(event)">
+        <button class="send-button" onclick="send_message()"><span class="material-symbols-rounded"> send </span></button>
+    </div>
+    <div class="textbox"><div class="textbox2" id="textbox"></div></div>
+</body>
+</html>
